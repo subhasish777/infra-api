@@ -5,6 +5,15 @@ from validation import validate_server, patch_validation
 
 app = Flask(__name__)
 
+def row_to_dict(row):
+    return {
+        "id": row[0],
+        "name": row[1],
+        "ip": row[2],
+        "os": row[3]
+    }
+
+
 # ============================================================
 # BASIC ROUTES
 # ============================================================
@@ -39,16 +48,10 @@ def get_servers():
     servers=[]
 
     for row in db_rows:
-        server_record = {
+        servers.append(row_to_dict(row))
+
         
-            "id":row[0],
-            "name":row[1],
-            "ip":row[2],
-            "os":row[3],
 
-        }
-
-        servers.append(server_record)
     return jsonify(servers)
 
 #POST FUNCTION
@@ -111,17 +114,8 @@ def get_server_by_id(id):
     
     if row:   
 
-        server_record = {
-        
-            "id":row[0],
-            "name":row[1],
-            "ip":row[2],
-            "os":row[3],
+        return jsonify(row_to_dict(row))
 
-        }
-
-        
-        return jsonify(server_record)
     return jsonify({"error": "Server not found"}), 404
 
 
@@ -186,9 +180,7 @@ def put_servers(id):
 @app.route("/servers/<int:id>",methods=['DELETE'])
 def delete_server(id):
 
-    data = request.get_json()
-
-    
+      
     connection = get_connection()
 
     cursor = connection.cursor()
@@ -256,7 +248,8 @@ def patch_servers(id):
 
     query=f"""
     UPDATE servers
-    SET {set_clause} where id=? 
+    SET {set_clause} 
+    where id=? 
     """
 
 
