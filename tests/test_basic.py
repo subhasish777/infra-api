@@ -24,3 +24,30 @@ def test_author():
 
     assert response.status_code == 200
     assert b"current user" in response.data
+
+def test_get_servers():
+    response = client.get("/servers")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert isinstance(data, list)
+    assert len(data) > 0
+
+    first_server = data[0]
+
+    assert "id" in first_server
+    assert "name" in first_server
+    assert "ip" in first_server
+    assert "os" in first_server
+
+
+def test_get_server_not_found():
+    response = client.get("/servers/9999")
+
+    assert response.status_code == 404
+
+    data = response.get_json()
+
+    assert data["error"] == "Server not found"
