@@ -88,18 +88,7 @@ def create_app():
         "id": new_id
         }), 201
         
-        #'''data= request.get_json()
-        
-        #error = validate_server(data)
-
-        #if error:
-        #    return error
-
-        #new_id=len(servers)+1
-        #data["id"]=new_id
-        #servers.append(data)
-        #return jsonify(data),201
-    
+            
     #GET SERVER ID
     @app.route("/servers/<int:id>")
     def get_server_by_id(id):
@@ -118,16 +107,6 @@ def create_app():
             return jsonify(row_to_dict(row))
 
         return jsonify({"error": "Server not found"}), 404
-
-
-
-
-
-        #for server in servers:
-        #   if server["id"]==id:
-        #      return jsonify(server)
-        #else:
-        #   return jsonify({"error": "Server not found"}), 404"""
 
 
     #PUT FUNCTION
@@ -158,24 +137,6 @@ def create_app():
         connection.close()
 
         return jsonify({"message": "Server updated successfully"}), 200
-
-
-
-        
-        #data=request.get_json()
-        
-        #error=validate_server(data)
-        #if error:
-            #return error
-        
-        #for server in servers:
-            #if server["id"]==id:
-                #server["name"]=data["name"]
-                #server["ip"]=data["ip"]
-                #server["os"]=data["os"]
-                #return jsonify(server),200 #contains id
-        
-        #return "ID not found", 404
     
     #DELETE SERVER
     @app.route("/servers/<int:id>",methods=['DELETE'])
@@ -198,14 +159,6 @@ def create_app():
 
         return jsonify({"message": "Server deleted successfully"}), 200
 
-
-    
-        #for server in servers:
-            #if server["id"]==id:
-                #servers.remove(server)
-                #return "delete successful" ,200
-
-    #return "ID not found" , 404 """
 
     #PATCH SERVER
     @app.route("/servers/<int:id>",methods=['PATCH'])
@@ -264,17 +217,6 @@ def create_app():
         connection.close()
 
         return jsonify({"message": "Server updated successfully"}), 200
-    
-           #for server in servers:
-            #if server["id"]==id:
-                #if "name" in data:
-                    #server["name"]=data["name"]
-                #if "ip" in data:
-                    #server["ip"]=data["ip"]
-                #if "os" in data:
-                    #server["os"]=data["os"]
-                #return jsonify(server), 200
-        #return "Not found", 404
     
     return app
 

@@ -51,3 +51,21 @@ def test_get_server_not_found():
     data = response.get_json()
 
     assert data["error"] == "Server not found"
+
+
+def test_create_server():
+
+    payload = {
+        "name": "test-server",
+        "ip": "10.10.10.10",
+        "os": "Ubuntu"
+    }
+
+    response = client.post("/servers", json=payload)
+
+    assert response.status_code == 201
+
+    data = response.get_json()
+
+    assert data["message"] == "Server created successfully"
+    assert "id" in data
