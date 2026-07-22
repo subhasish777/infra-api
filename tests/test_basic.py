@@ -69,3 +69,12 @@ def test_create_server():
 
     assert data["message"] == "Server created successfully"
     assert "id" in data
+
+def test_health():
+    response = client.get("/health")
+
+    assert response.status_code == 200
+
+    data = response.get_json()
+
+    assert data["status"] == "healthy"
