@@ -19,6 +19,13 @@ def create_app():
     # BASIC ROUTES
     # ============================================================
 
+
+    @app.route("/health")
+    def health():
+        return jsonify({
+            "status": "healthy"
+        }), 200    
+    
     @app.route("/")
     def home():
         return "Welcome to Infra List of Servers"
