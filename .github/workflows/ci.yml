@@ -32,7 +32,7 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest -v
-      publish:
+  publish:
       needs: test
 
       if: github.ref == 'refs/heads/main'
