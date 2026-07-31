@@ -32,3 +32,11 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest -v
+      publish:
+      needs: test
+
+      if: github.ref == 'refs/heads/main'
+
+      runs-on: ubuntu-latest
+
+      steps:
