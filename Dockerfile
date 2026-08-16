@@ -1,27 +1,39 @@
-# Use an official Python image
+# 1. Base Image
 FROM python:3.13-slim
 
-# Set working directory inside the container
+# 2. Python Environment Optimizations
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# 3. Create a non-root system user and group for security
+RUN groupadd --system appgroup && \
+    useradd --system --gid appgroup --create-home appuser
+
+# 4. Set working directory
 WORKDIR /app
 
-# Copy dependency file first
+# 5. Leverage Layer Caching for dependencies
 COPY requirements.txt .
-
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# 6. Copy application source code
 COPY . .
 
-# Initialize the database
+# 7. Initialize the database (Baked into the image for lab purposes)
 RUN python init_db.py
 
-# Expose Flask port
+# 8. Transfer ownership of the application files to the non-root user
+RUN chown -R appuser:appgroup /app
+
+# 9. Switch from root to the restricted user
+USER appuser
+
+# 10. Document the port
 EXPOSE 5000
 
-#Healthcheck
+# 11. Docker-native Healthcheck (Will be superseded by K8s later)
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" || exit 1
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')" || exit 1
 
-# Start the application
+# 12. Execution
 CMD ["python", "app.py"]
