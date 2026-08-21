@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 7. Initialize the database (Baked into the image for lab purposes)
-RUN python init_db.py
+#RUN python init_db.py
 
 # 8. Transfer ownership of the application files to the non-root user
 RUN chown -R appuser:appgroup /app
