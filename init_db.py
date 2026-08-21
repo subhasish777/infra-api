@@ -5,25 +5,14 @@ cursor = connection.cursor()
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS servers (
-    id INTEGER PRIMARY KEY,
-    name TEXT NOT NULL UNIQUE,
-    ip TEXT NOT NULL UNIQUE,
-    os TEXT NOT NULL
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    ip VARCHAR(255) NOT NULL UNIQUE,
+    os VARCHAR(255) NOT NULL
 )
-""")
-
-# Optional sample data
-cursor.execute("""
-INSERT OR IGNORE INTO servers (name, ip, os)
-VALUES ('web-server', '192.168.1.10', 'Ubuntu')
-""")
-
-cursor.execute("""
-INSERT OR IGNORE INTO servers (name, ip, os)
-VALUES ('db-server', '192.168.1.20', 'Rocky Linux')
 """)
 
 connection.commit()
 connection.close()
 
-print("Database initialized successfully")
+print("Database schema created successfully")

@@ -1,4 +1,4 @@
-from flask import Flask,jsonify,request
+from flask import Flask, jsonify, request, render_template
 from database import get_connection
 from validation import validate_server, patch_validation
 
@@ -19,16 +19,16 @@ def create_app():
     # BASIC ROUTES
     # ============================================================
 
-
     @app.route("/health")
     def health():
         return jsonify({
             "status": "healthy"
         }), 200    
     
+    # CHANGED: Now rendering the HTML template instead of a raw string
     @app.route("/")
     def home():
-        return "Welcome to Infra List of Servers"
+        return render_template("index.html")
 
     @app.route("/version")
     def version():
@@ -41,51 +41,44 @@ def create_app():
     # ============================================================
     # SERVER ROUTES
     # ============================================================
+    
     @app.route("/servers")
     def get_servers():
-        connection=get_connection()
-
-        cursor=connection.cursor()
+        connection = get_connection()
+        cursor = connection.cursor()
 
         cursor.execute("Select * from servers")
 
-        db_rows=cursor.fetchall()
+        db_rows = cursor.fetchall()
         connection.close()
 
-
-        servers=[]
-
+        servers = []
         for row in db_rows:
             servers.append(row_to_dict(row))
 
-            
-
         return jsonify(servers)
 
-    #POST FUNCTION
 
-    @app.route("/servers",methods=["POST"])
+    @app.route("/servers", methods=["POST"])
     def post_servers():
-        
-        data=request.get_json()
-        error=validate_server(data)
+        data = request.get_json()
+        error = validate_server(data)
 
         if error:
             return error
         
-
-        connection=get_connection()
-        cursor=connection.cursor()
+        connection = get_connection()
+        cursor = connection.cursor()
         
-
-
+        # CHANGED: ? to %s and added "RETURNING id" for Postgres compatibility
         cursor.execute("""
-        INSERT INTO servers (name,ip,os) 
-        Values (?,?,?)""",
-        (data["name"],data["ip"],data["os"]) 
+        INSERT INTO servers (name, ip, os) 
+        VALUES (%s, %s, %s) RETURNING id""",
+        (data["name"], data["ip"], data["os"]) 
         )
 
-        new_id=cursor.lastrowid
+        # CHANGED: Using fetchone() instead of lastrowid to grab the new Postgres ID
+        new_id = cursor.fetchone()[0]
 
         connection.commit()
         connection.close()
@@ -96,43 +89,38 @@ def create_app():
         }), 201
         
             
-    #GET SERVER ID
     @app.route("/servers/<int:id>")
     def get_server_by_id(id):
+        connection = get_connection()
+        cursor = connection.cursor()
 
-        connection=get_connection()
-        cursor=connection.cursor()
+        # CHANGED: ? to %s
+        cursor.execute("Select * from servers where id=%s", (id,))
 
-        cursor.execute("Select * from servers where id=?",(id,))
-
-
-        row=cursor.fetchone()
+        row = cursor.fetchone()
         connection.close()
         
         if row:   
-
             return jsonify(row_to_dict(row))
 
         return jsonify({"error": "Server not found"}), 404
 
 
-    #PUT FUNCTION
-    @app.route("/servers/<int:id>",methods=['PUT'])
+    @app.route("/servers/<int:id>", methods=['PUT'])
     def put_servers(id):
-
         data = request.get_json()
-
         error = validate_server(data)
 
         if error:
             return error
 
         connection = get_connection()
-
         cursor = connection.cursor()
 
+        # CHANGED: ? to %s across the board
         cursor.execute("""
-        UPDATE servers SET name=?,ip=?,os=? where id =? """, (data["name"], data["ip"], data["os"], id)
+        UPDATE servers SET name=%s, ip=%s, os=%s where id=%s """, 
+        (data["name"], data["ip"], data["os"], id)
         )
 
         if cursor.rowcount == 0:
@@ -140,87 +128,76 @@ def create_app():
             return jsonify({"error": "Server not found"}), 404
 
         connection.commit()
-
         connection.close()
 
         return jsonify({"message": "Server updated successfully"}), 200
     
-    #DELETE SERVER
-    @app.route("/servers/<int:id>",methods=['DELETE'])
+    
+    @app.route("/servers/<int:id>", methods=['DELETE'])
     def delete_server(id):
-
-        
         connection = get_connection()
-
         cursor = connection.cursor()
 
-        cursor.execute("DELETE from servers where id=?" ,(id,))
+        # CHANGED: ? to %s
+        cursor.execute("DELETE from servers where id=%s", (id,))
 
-        if cursor.rowcount==0:
+        if cursor.rowcount == 0:
             connection.close()
             return jsonify({"error": "Server not found"}), 404
         
         connection.commit()
-
         connection.close()
 
         return jsonify({"message": "Server deleted successfully"}), 200
 
 
-    #PATCH SERVER
-    @app.route("/servers/<int:id>",methods=['PATCH'])
+    @app.route("/servers/<int:id>", methods=['PATCH'])
     def patch_servers(id):
-
-        data=request.get_json()
-
-        error=patch_validation(data)
+        data = request.get_json()
+        error = patch_validation(data)
         
         if error:
             return error
 
+        update_field = []
+        update_values = []
 
-        update_field=[]
-        update_values=[]
-
+        # CHANGED: ? to %s in all appended strings
         if "name" in data:
-            update_field.append("name=?")
+            update_field.append("name=%s")
             update_values.append(data["name"])
 
         if "ip" in data:
-            update_field.append("ip=?")
+            update_field.append("ip=%s")
             update_values.append(data["ip"])
 
         if "os" in data:
-            update_field.append("os=?")
+            update_field.append("os=%s")
             update_values.append(data["os"])
 
-        # No valid fields provided
         if not update_field:
             return jsonify({"error": "No fields provided"}), 400
 
+        set_clause = ",".join(update_field)
 
-        set_clause=",".join(update_field)
-
-        connection=get_connection()
-        cursor=connection.cursor()
-
+        connection = get_connection()
+        cursor = connection.cursor()
         update_values.append(id)
 
-
-        query=f"""
+        # CHANGED: ? to %s in the WHERE clause
+        query = f"""
         UPDATE servers
         SET {set_clause} 
-        where id=? 
+        where id=%s 
         """
                 
-        cursor.execute(query,update_values)
+        cursor.execute(query, update_values)
 
         if cursor.rowcount == 0:
             connection.close()
             return jsonify({"error": "Server not found"}), 404
 
         connection.commit()
-
         connection.close()
 
         return jsonify({"message": "Server updated successfully"}), 200
